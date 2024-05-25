@@ -2,11 +2,11 @@
 pragma solidity >=0.8.2 <0.9.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 contract ERC20Token is IERC20 {
 
-    using SafeMath for uint256;
+    using Math for uint256;
 
     mapping (address => uint256) internal _balances;
 
@@ -41,6 +41,7 @@ contract ERC20Token is IERC20 {
         return _allowed[owner][spender];
     }
 
+  
     /**
      * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
      * Beware that changing an allowance with this method brings the risk that someone may use both the old
@@ -52,6 +53,8 @@ contract ERC20Token is IERC20 {
      */
     function approve(address spender, uint256 value) public returns (bool) {
         require(spender != address(0));
+        require(_balances[msg.sender] >= value);
+        require(value > 0); 
 
         _allowed[msg.sender][spender] = value;
         emit Approval(msg.sender, spender, value);
@@ -78,8 +81,8 @@ contract ERC20Token is IERC20 {
     function _transfer(address from, address to, uint256 value) internal {
         require(value <= _balances[from]);
         require(to != address(0));
-        _balances[from] = _balances[from].sub(value);
-        _balances[to] = _balances[to].add(value);
+        _balances[from] -= value ;
+        _balances[to] += value;
         emit Transfer(from, to, value);
     }
 
@@ -98,8 +101,8 @@ contract ERC20Token is IERC20 {
     function _transferFrom(address spender,address from,address to,uint256 value) internal
     {
         require(value <= _allowed[from][spender]);
-
-        _allowed[from][spender] = _allowed[from][spender].sub(value);
+        require(_balances[from] >= value); 
+        _allowed[from][spender] -= value ;
         _transfer(from, to, value);
     }
 
@@ -118,7 +121,7 @@ contract ERC20Token is IERC20 {
     {
         require(spender != address(0));
 
-        _allowed[msg.sender][spender] = (_allowed[msg.sender][spender].add(addedValue));
+        _allowed[msg.sender][spender] += addedValue;
         emit Approval(msg.sender, spender, _allowed[msg.sender][spender]);
         return true;
     }
@@ -136,7 +139,7 @@ contract ERC20Token is IERC20 {
     {
         require(spender != address(0));
 
-        _allowed[msg.sender][spender] = (_allowed[msg.sender][spender].sub(subtractedValue));
+        _allowed[msg.sender][spender] -= subtractedValue;
         emit Approval(msg.sender, spender, _allowed[msg.sender][spender]);
         return true;
     }
@@ -152,8 +155,8 @@ contract ERC20Token is IERC20 {
     function _mint(address account, uint256 value) internal {
         require(account != address(0), "Account cannot be zero address");
 
-        _totalSupply = _totalSupply.add(value);
-        _balances[account] = _balances[account].add(value);
+        _totalSupply += value;
+        _balances[account] += value;
         emit Transfer(address(0), account, value);
     }
 
@@ -164,12 +167,12 @@ contract ERC20Token is IERC20 {
      * @param value The amount that will be burnt.
      */
     function _burn(address account, uint256 value) internal {
-        require(account != address(0), "Account cannot be zero address");
+       require(account != address(0), "Account cannot be zero address");
 
         require(value <= _balances[account]);
 
-        _totalSupply = _totalSupply.sub(value);
-        _balances[account] = _balances[account].sub(value);
+        _totalSupply -= value;
+        _balances[account] -= value;
         emit Transfer(account, address(0), value);
     }
 
@@ -185,10 +188,9 @@ contract ERC20Token is IERC20 {
 
         // Should https://github.com/OpenZeppelin/zeppelin-solidity/issues/707 be accepted,
         // this function needs to emit an event with the updated approval.
-        _allowed[account][msg.sender] = _allowed[account][msg.sender].sub(value);
+        _allowed[account][msg.sender] -= value;
         _burn(account, value);
     }
 }
-
 
 
