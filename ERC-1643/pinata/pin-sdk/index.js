@@ -6,11 +6,29 @@ const { PINATA_API_KEY,PINATA_SECRET_KEY } = process.env; // instead of PINATA_A
 const pinataSDK = require('@pinata/sdk')   //import sdk to indexjs 
 const pinata = new pinataSDK( PINATA_API_KEY,PINATA_SECRET_KEY ); //create new instance of sdk
 
+//new file service object
 
-pinata.testAuthentication().then((result) =>{
+const fs = require('fs'); // fs -> inbuilt module in nodejs and allow us to interact with file s/m ie our computer
+const readableStreamForFile = fs.createReadStream('./blockchain.jpg');//create a readable stream
 
+//create object to enter your metadata
 
+const options ={
+
+    pinataMetadata:{
+        name:'project1',
+        keyvalues:{
+            document:'3'
+        }
+    },
+    pinataOptions:{
+        cidVersion: 0,
+    }
+}
+
+pinata.pinFileToIPFS(readableStreamForFile,options).then ((result)=> {
     console.log(result);
-}).catch((err)  =>{
+}).catch((err) =>{
     console.log(err);
-});
+})
+
